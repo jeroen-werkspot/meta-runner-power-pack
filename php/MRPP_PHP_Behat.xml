@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta-runner name="PHP - Behat">
+    <description>Behat</description>
+    <settings>
+        <parameters>
+            <param name="system.behat.profile.profile" value="" spec="text description='Behat runtime (if empty - default will be used)' display='normal' label='Behat profile:' validationMode='any'" />
+            <param name="system.php.workingDir.dir" value="" spec="text description='Working directory (if empty - current working directory will be used)' display='normal' label='Working directory:' validationMode='any'" />
+            <param name="system.behat.params" value="" spec="text description='Optional Behat parameters' display='normal' label='Behat parameters:' validationMode='any'" />
+        </parameters>
+        <build-runners>
+            <runner id="RUNNER_14" name="" type="Ant">
+                <parameters>
+                    <param name="build-file"><![CDATA[<project name="Behat">
+
+<condition property="php.workingDir" value="${teamcity.build.workingDir}">
+   <not>
+      <matches pattern=".+" string="${php.workingDir.dir}"/>
+   </not>
+</condition>
+<property name="php.workingDir" value="${php.workingDir.dir}" />
+
+<condition property="behat.profile" value="default">
+   <not>
+      <matches pattern=".+" string="${behat.profile.profile}"/>
+   </not>
+</condition>
+<property name="behat.profile" value="${behat.profile.profile}" />
+
+<property name="behat.runtime" value="bin/behat" />
+<property name="behat.junit.log" value="${teamcity.build.tempDir}/behat-log.xml"/>
+
+<target name="runTests">
+  <echo>Running Behat with profile: ${behat.profile}</echo>
+
+  <exec executable="${behat.runtime}" dir="${php.workingDir}" failonerror="false" resultproperty="behat.result">
+    <arg line="&#x002d;&#x002d;profile ${behat.profile} &#x002d;&#x002d;format progress,Behat\Behat\Formatter\JUnitFileFormatter  &#x002d;&#x002d;out null,${behat.junit.log} ${behat.params}"/>
+  </exec>
+  <echo>##teamcity[importData type='junit' path='${behat.junit.log}']</echo>
+  <condition property="behat.resulterror">
+    <not>
+      <equals arg1="0" arg2="${behat.result}"/>
+    </not>
+  </condition>
+  <fail message="Integration tests failed." if="behat.result.error" />
+</target>
+</project>]]></param>
+                    <param name="target" value="runTests" />
+                    <param name="teamcity.step.mode" value="default" />
+                    <param name="use-custom-build-file" value="true" />
+                </parameters>
+            </runner>
+        </build-runners>
+        <requirements />
+    </settings>
+</meta-runner>
